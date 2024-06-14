@@ -26,7 +26,7 @@ Breakdown of the Components:
 <li><u>mux</u>:This is the variable name for the mutex you are creating. You can name it whatever you like, but mux is commonly used for brevity.
 <li><u>portMUX_INITIALIZER_UNLOCKED</u>: This macro initializes the mux variable in an unlocked state, meaning that the mutex is initially available.
 It sets up the mutex so that it is ready to be used in critical sections or ISRs (Interrupt Service Routines).
-
+</li></ul>
 <br>
 Why Use IRAM_ATTR?
 <ul>
@@ -36,5 +36,5 @@ Why Use IRAM_ATTR?
 
 <li><u>Interrupt Context</u>: ISRs are time-critical functions. Placing them in IRAM ensures they run with minimal latency, which is crucial for handling interrupts promptly.
 
-
+</ul>
 </font>
