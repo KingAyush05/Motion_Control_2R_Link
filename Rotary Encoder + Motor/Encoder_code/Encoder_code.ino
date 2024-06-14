@@ -1,44 +1,48 @@
-volatile int temp, counter = 0; //This variable will increase or decrease depending on the rotation of encoder
-    
-void setup() {
-  Serial.begin (9600);
+#include <math.h>
 
-  pinMode(2, INPUT_PULLUP); // internal pullup input pin 2 
+volatile float temp, counter = 0; // This variable will increase or decrease depending on the rotation of encoder
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(2, INPUT_PULLUP); // Internal pullup input pin 2 
+  pinMode(4, INPUT_PULLUP); // Internal pullup input pin 3
+
+  // Setting up interrupts
+  // A rising pulse from encoder activates ai0().
+  attachInterrupt(digitalPinToInterrupt(2), ai0, RISING);
   
-  pinMode(3, INPUT_PULLUP); // internalเป็น pullup input pin 3
-//Setting up interrupt
-  //A rising pulse from encodenren activated ai0(). AttachInterrupt 0 is DigitalPin nr 2 on moust Arduino.
-  attachInterrupt(0, ai0, RISING);
-   
-  //B rising pulse from encodenren activated ai1(). AttachInterrupt 1 is DigitalPin nr 3 on moust Arduino.
-  attachInterrupt(1, ai1, RISING);
-  }
-   
-  void loop() {
+  // B rising pulse from encoder activates ai1().
+  attachInterrupt(digitalPinToInterrupt(4), ai1, RISING);
+}
+
+void loop() {
   // Send the value of counter
-  if( counter != temp ){
-  Serial.println("Position = " + String(counter));
-  Serial.println("Angle Rotated = " + String(counter*(360.0/1200.0)));  
-  temp = counter;
+  if (counter != temp) {
+    float rot_angle = counter*(360.0/600.0);
+    float post = fmod(rot_angle,360.0);
+    Serial.println("Position = " + String(post));
+    Serial.println("Angle Rotated = " + String(rot_angle));  
+    temp = counter;
   }
-  }
-   
-  void ai0() {
+}
+
+void ai0() {
   // ai0 is activated if DigitalPin nr 2 is going from LOW to HIGH
   // Check pin 3 to determine the direction
-  if(digitalRead(3)==LOW) {
-  counter++;
-  }else{
-  counter--;
+  if (digitalRead(3) == LOW) {
+    counter++;
+  } else {
+    counter--;
   }
+}
+
+void ai1() {
+  // ai1 is activated if DigitalPin nr 3 is going from LOW to HIGH
+  // Check pin 2 to determine the direction
+  if (digitalRead(2) == LOW) {
+    counter--;
+  } else {
+    counter++;
   }
-   
-  void ai1() {
-  // ai0 is activated if DigitalPin nr 3 is going from LOW to HIGH
-  // Check with pin 2 to determine the direction
-  if(digitalRead(2)==LOW) {
-  counter--;
-  }else{
-  counter++;
-  }
-  }
+}
