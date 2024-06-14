@@ -1,19 +1,22 @@
 #include <math.h>
 
-volatile float temp, counter = 0; // This variable will increase or decrease depending on the rotation of encoder
+volatile float temp, counter = 0;// This variable will increase or decrease depending on the rotation of encoder
+
+const int EA = 2;
+const int EB = 3;
 
 void setup() {
   Serial.begin(115200);
 
-  pinMode(2, INPUT_PULLUP); // Internal pullup input pin 2 
-  pinMode(4, INPUT_PULLUP); // Internal pullup input pin 3
+  pinMode(EA, INPUT_PULLUP); // Internal pullup input pin 2 
+  pinMode(EB, INPUT_PULLUP); // Internal pullup input pin 3
 
   // Setting up interrupts
   // A rising pulse from encoder activates ai0().
-  attachInterrupt(digitalPinToInterrupt(2), ai0, RISING);
+  attachInterrupt(0, ai0, RISING);
   
   // B rising pulse from encoder activates ai1().
-  attachInterrupt(digitalPinToInterrupt(4), ai1, RISING);
+  attachInterrupt(1, ai1, RISING);
 }
 
 void loop() {
@@ -30,7 +33,7 @@ void loop() {
 void ai0() {
   // ai0 is activated if DigitalPin nr 2 is going from LOW to HIGH
   // Check pin 3 to determine the direction
-  if (digitalRead(3) == LOW) {
+  if (digitalRead(EB) == LOW) {
     counter++;
   } else {
     counter--;
@@ -40,7 +43,7 @@ void ai0() {
 void ai1() {
   // ai1 is activated if DigitalPin nr 3 is going from LOW to HIGH
   // Check pin 2 to determine the direction
-  if (digitalRead(2) == LOW) {
+  if (digitalRead(EA) == LOW) {
     counter--;
   } else {
     counter++;
