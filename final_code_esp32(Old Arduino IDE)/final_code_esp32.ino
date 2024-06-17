@@ -17,15 +17,16 @@
 
 #include <math.h>
 
-volatile int post, counter = 0; // This variable will increase or decrease depending on the rotation of encoder
-volatile int temp = 360;
+volatile int temp,counter = 0; // This variable will increase or decrease depending on the rotation of encoder
+
 // Define a portMUX_TYPE variable
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 const int pwmPin = 13;  // Onboard LED
 
 // Setting PWM properties
-const int freq = 10000;
+const int freq = 2;
+const int ledChannel = 0;
 const int resolution = 10; //Resolution can be 8, 10, 12, 15
 
 const int IN1 = 25;
@@ -33,7 +34,7 @@ const int IN2 = 33;
 
 const int EA = 26;
 const int EB = 27;
-float rot_angle = 0;
+
 void IRAM_ATTR enc_isr0() {
   // ai0 is activated if DigitalPin nr 2 is going from LOW to HIGH
   // Check pin 3 to determine the direction
@@ -65,10 +66,12 @@ void setup() {
   pinMode(IN1,OUTPUT);
   pinMode(IN2,OUTPUT);
 
-  digitalWrite(IN1,LOW);
-  digitalWrite(IN2,HIGH); 
-  analogWriteResolution(pwmPin, resolution);
-  analogWriteFrequency(pwmPin, freq);
+  digitalWrite(IN1,HIGH);
+  digitalWrite(IN2,LOW); 
+
+  ledcSetup(ledChannel, freq, resolution);
+
+  ledcAttachPin(pwmPin, ledChannel);
 
   pinMode(EA, INPUT_PULLUP); // Internal pullup input pin 2 
   pinMode(EB, INPUT_PULLUP); // Internal pullup input pin 3
@@ -88,32 +91,35 @@ void loop() {
   portEXIT_CRITICAL(&mux);
 
   if (localCounter != temp) {
-    rot_angle = localCounter * (360.0 / 1200.0);
-    post = fmod(rot_angle, 360.0);
+    float rot_angle = localCounter * (360.0 / 1200.0);
+    float post = fmod(rot_angle, 360.0);
     Serial.println("Position = " + String(post));
     Serial.println("Angle Rotated = " + String(rot_angle));
     temp = localCounter;
   }
-   int SP ;
+    
   // Check if there's any user input available
   if (Serial.available() > 0) {
     // Read the input as a string
     String input = Serial.readStringUntil('\n');
 
     // Convert the input to an integer (duty cycle percentage)
-    SP = input.toInt();
-    
-  }
-  if(rot_angle<SP){
-    float p = 0.5;
-    float error = SP-rot_angle;
-    float sig = error*p;
-    Serial.println("Position global = " + String(rot_angle));
-    Serial.println("error = " + String(sig));
-    analogWrite(pwmPin, sig);
-  }
-  if(rot_angle>=SP){
-        analogWrite(pwmPin, 0);
-  }
+    int dutyCycle = input.toInt();
 
+    // Ensure the duty cycle is within 0-100 range
+    if (dutyCycle < 0) dutyCycle = 0;
+    if (dutyCycle > 100) dutyCycle = 100;
+
+    // Convert the duty cycle percentage to a value between 0 and 255
+    int pwmValue = map(dutyCycle, 0, 100, 0, 1023);
+
+    // Set the PWM value
+    ledcWrite(ledChannel, pwmValue);
+
+    // Print the set duty cycle and PWM value to the Serial monitor
+    Serial.print("Duty Cycle: ");
+    Serial.print(dutyCycle);
+    Serial.print("%, PWM Value: ");
+    Serial.println(pwmValue);
+  }
 }
