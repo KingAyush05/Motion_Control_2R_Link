@@ -131,14 +131,14 @@ void loop() {
     error = post - SP;
     pid_sig();
   }
-  else if((post>=270 && SP+270-post<=90 && SP+360-post>0 && post!=SP)){       //clockwise if it does cross 0 degree mark
+  else if((post>=180 && 360-post+SP<=180 && post!=SP)){       //clockwise if it does cross 0 degree mark
     digitalWrite(IN1,LOW);
     digitalWrite(IN2,HIGH); 
     error = SP +360 -post;
     pid_sig();
 
   }
-  else if ((SP>=270 && post+270-SP<=90 && post+360-SP>0 && SP!=post )){   //anti-clockwise if it does cross 0 degree mark
+  else if ((SP>=180 && 360-SP+post<=180 && SP!=post )){   //anti-clockwise if it does cross 0 degree mark
     digitalWrite(IN1,HIGH);
     digitalWrite(IN2,LOW); 
     error = post +360 - SP; 
