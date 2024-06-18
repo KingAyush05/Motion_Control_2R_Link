@@ -34,7 +34,7 @@ const int IN2 = 33;
 const int EA = 26;
 const int EB = 27;
 float rot_angle, post = 0;
-float p = 2;
+
 void IRAM_ATTR enc_isr0() {
   // ai0 is activated if DigitalPin nr 2 is going from LOW to HIGH
   // Check pin 3 to determine the direction
@@ -59,10 +59,13 @@ void IRAM_ATTR enc_isr1() {
   portEXIT_CRITICAL_ISR(&mux);
 }
 void IRAM_ATTR pid_sig(){
+
+  float p = 8;
+
   portENTER_CRITICAL_ISR(&mux);
       float sig = error*p;
-    if(sig>100)
-      analogWrite(pwmPin,100);
+    if(sig>1024)
+      analogWrite(pwmPin,1024);
     else if(sig>0)
       analogWrite(pwmPin, sig);
     else
@@ -103,22 +106,18 @@ void loop() {
     int rev = (rot_angle >= 0) ? (rot_angle / 360) : ((rot_angle-360) / 360);
     post = rot_angle - 360*rev;
     Serial.println("Position = " + String(post));
-    Serial.println("Angle Rotated = " + String(rot_angle));
-    Serial.println("rev = " + String(rev));
+    // Serial.println("Angle Rotated = " + String(rot_angle));
+    Serial.println("error = " + String(fabs(post - SP)));
+    // Serial.println("rev = " + String(rev));
     temp = localCounter;
   }
   // Check if there's any user input available
   if (Serial.available() > 0) {
     // Read the input as a string
     String input = Serial.readStringUntil('\n');
-    if(input == "print"){
-      Serial.println("Position global = " + String(post));
-      Serial.println("error = " + String(error));
-    }
-    // Convert the input to an integer (duty cycle percentage)
-    else
-      SP = input.toInt();
+    SP = input.toInt();
   }
+  
   if((SP-post<=180 && SP-post>0) ){       //clockwise if it does not cross 0 degree mark
     digitalWrite(IN1,LOW);
     digitalWrite(IN2,HIGH); 
@@ -131,17 +130,21 @@ void loop() {
     error = post - SP;
     pid_sig();
   }
-  else if((post>=180 && 360-post+SP<=180 && post!=SP)){       //clockwise if it does cross 0 degree mark
+  else if((post>=180 && 360-post+SP<=180)){       //clockwise if it does cross 0 degree mark
     digitalWrite(IN1,LOW);
     digitalWrite(IN2,HIGH); 
-    error = SP +360 -post;
+    error = 360-post+SP;
     pid_sig();
 
   }
-  else if ((SP>=180 && 360-SP+post<=180 && SP!=post )){   //anti-clockwise if it does cross 0 degree mark
+  else if ((SP>=180 && 360-SP+post<=180)){   //anti-clockwise if it does cross 0 degree mark
     digitalWrite(IN1,HIGH);
     digitalWrite(IN2,LOW); 
-    error = post +360 - SP; 
+    error = 360-SP+post; 
+    pid_sig();
+  }
+  else if(SP==post){
+    error = 0;
     pid_sig();
   }
 }
