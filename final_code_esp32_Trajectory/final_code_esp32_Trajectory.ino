@@ -17,7 +17,9 @@
 
 #include <math.h>
 
-volatile int counter,SP, error = 0; // This variable will increase or decrease depending on the rotation of encoder
+volatile int counter, val = 0;
+volatile float SP, error = 0; 
+// This variable will increase or decrease depending on the rotation of encoder
 volatile int temp = 360;
 // Define a portMUX_TYPE variable
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
@@ -101,21 +103,33 @@ void loop() {
   localCounter = counter;
   portEXIT_CRITICAL(&mux);
 
+  float t = millis() / 1000.0; // Time in seconds
+  float angle = 100 * t * PI / 180;  // Convert to radians (if needed, here we assume t is already in seconds for simplicity)
+
+  // Calculate the sine of the angle
+  float sinValue = sin(angle);
+
+  SP = sinValue*60 + 120;
+  // if(Serial.available() > 0){
+  //   String input = Serial.readStringUntil('\n');
+  //   val = input.toInt();
+    
+  // }
+  
+  
   if (localCounter != temp) {
     rot_angle = localCounter * (360.0 / 1200.0);
     int rev = (rot_angle >= 0) ? (rot_angle / 360) : ((rot_angle-360) / 360);
     post = rot_angle - 360*rev;
-    Serial.println("Position = " + String(post));
+    Serial.print("Position = ");
+    Serial.print(String(post));
     // Serial.println("Angle Rotated = " + String(rot_angle));
-    Serial.println("error = " + String(fabs(post - SP)));
+    Serial.print(", error = ");
+    Serial.print(fabs(post - SP));
+    Serial.print(", Sinevalue = ");
+    Serial.println(SP);
     // Serial.println("rev = " + String(rev));
     temp = localCounter;
-  }
-  // Check if there's any user input available
-  if (Serial.available() > 0) {
-    // Read the input as a string
-    String input = Serial.readStringUntil('\n');
-    SP = input.toInt();
   }
   
   if((SP-post<=180 && SP-post>0) ){       //clockwise if it does not cross 0 degree mark
@@ -143,10 +157,7 @@ void loop() {
     error = 360-SP+post; 
     pid_sig();
   }
-  else if(SP==post){
-    error = 0;
-    pid_sig();
-  }
+  
 }
 
 
