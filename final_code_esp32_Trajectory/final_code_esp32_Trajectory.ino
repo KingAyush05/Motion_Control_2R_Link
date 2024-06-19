@@ -24,6 +24,13 @@ volatile int temp = 360;
 // Define a portMUX_TYPE variable
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
+float error_prev = 0;
+float t_prev;
+
+const float dt = 0.001;
+
+float integral, previous, output = 0;
+
 const int pwmPin = 13;  // Onboard LED
 
 // Setting PWM properties
@@ -62,19 +69,30 @@ void IRAM_ATTR enc_isr1() {
 }
 void IRAM_ATTR pid_sig(){
 
-  float p = 8;
+  float p = 15;
+  float d = 0.3;
+  float i = 0.0;
 
-  portENTER_CRITICAL_ISR(&mux);
-      float sig = error*p;
-    if(sig>1024)
-      analogWrite(pwmPin,1024);
-    else if(sig>0)
-      analogWrite(pwmPin, sig);
-    else
-      analogWrite(pwmPin, 0);
-  portEXIT_CRITICAL_ISR(&mux);
-  }
+  float derivative = (error - error_prev)/dt;
+  error_prev = error;
+  integral += error*dt;
+
+
+    float sig = error*p + derivative*d + integral*i;
+      // Serial.println("derivative = " + String(derivative));
+  if(sig>1024)
+    analogWrite(pwmPin,1024);   
+  else if(sig>0)
+    analogWrite(pwmPin, sig);
+  else
+    analogWrite(pwmPin, 0);
+
+}
+
 void setup() {
+
+  t_prev = 0;
+
   Serial.begin(115200);
   pinMode(pwmPin,OUTPUT);
 
@@ -98,23 +116,30 @@ void setup() {
 }
 
 void loop() {
+
+  //delay(20);
   int localCounter;
   portENTER_CRITICAL(&mux);
   localCounter = counter;
   portEXIT_CRITICAL(&mux);
 
-  float t = millis() / 1000.0; // Time in seconds
+  float t = millis() / 1000.00; // Time in seconds
+  
+  // Serial.println("dt = " + String(dt));
+
   float angle = 100 * t * PI / 180;  // Convert to radians (if needed, here we assume t is already in seconds for simplicity)
 
   // Calculate the sine of the angle
   float sinValue = sin(angle);
 
-  SP = sinValue*60 + 120;
+  SP = sinValue*45 + 90;
   // if(Serial.available() > 0){
   //   String input = Serial.readStringUntil('\n');
   //   val = input.toInt();
     
   // }
+
+  // delay(10);
   
   
   if (localCounter != temp) {
@@ -122,12 +147,13 @@ void loop() {
     int rev = (rot_angle >= 0) ? (rot_angle / 360) : ((rot_angle-360) / 360);
     post = rot_angle - 360*rev;
     Serial.print("Position = ");
-    Serial.print(String(post));
+    Serial.print(post);
     // Serial.println("Angle Rotated = " + String(rot_angle));
-    Serial.print(", error = ");
-    Serial.print(fabs(post - SP));
     Serial.print(", Sinevalue = ");
-    Serial.println(SP);
+    Serial.print(SP);
+    Serial.print(", error = ");
+    Serial.println(fabs(post - SP));
+    
     // Serial.println("rev = " + String(rev));
     temp = localCounter;
   }
