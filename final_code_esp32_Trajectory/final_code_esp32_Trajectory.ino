@@ -69,8 +69,8 @@ void IRAM_ATTR enc_isr1() {
 }
 void IRAM_ATTR pid_sig(){
 
-  float p = 15;
-  float d = 0.3;
+  float p = 18;
+  float d = 1;
   float i = 0.0;
 
   float derivative = (error - error_prev)/dt;
@@ -127,7 +127,7 @@ void loop() {
   
   // Serial.println("dt = " + String(dt));
 
-  float angle = 100 * t * PI / 180;  // Convert to radians (if needed, here we assume t is already in seconds for simplicity)
+  float angle = 360 * t * PI / 180;  // Convert to radians (if needed, here we assume t is already in seconds for simplicity)
 
   // Calculate the sine of the angle
   float sinValue = sin(angle);
