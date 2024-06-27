@@ -73,8 +73,8 @@ void IRAM_ATTR pid_sig(){
 
   // PID Values for 20 volts motor without weight
   float p = 10;
-  float d = 2;
-  float i = 0;
+  float d = 6;
+  float i = 0.001;
 
   // PID Values for 24 volts with weight
     // float p = 250;
